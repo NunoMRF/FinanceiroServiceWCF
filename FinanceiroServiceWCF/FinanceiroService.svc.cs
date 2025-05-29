@@ -120,23 +120,27 @@ namespace FinanceiroServiceWCF
 
         public DadosFinanceiros GetDadosFinanceirosPorPeca(string codigoPeca)
         {
+            if (string.IsNullOrWhiteSpace(codigoPeca))
+                return null;
+
             DadosFinanceiros dados = null;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 string query = @"
             SELECT 
-                Codigo_Peca,
-                SUM(Custo_Producao) AS Custo,
-                SUM(Lucro) AS Lucro,
-                SUM(Prejuizo) AS Prejuizo,
-                SUM(Tempo_Producao) AS TempoTotal
-            FROM Contabilidade.dbo.Custos_Peca
-            WHERE Codigo_Peca = @Codigo
-            GROUP BY Codigo_Peca";
+                cp.Codigo_Peca,
+                SUM(cp.Custo_Producao) AS Custo,
+                SUM(cp.Lucro) AS Lucro,
+                SUM(cp.Prejuizo) AS Prejuizo,
+                SUM(cp.Tempo_Producao) AS TempoTotal
+            FROM Contabilidade.dbo.Custos_Peca cp
+            JOIN Producao.dbo.Produto p ON cp.ID_Produto = p.ID_Produto
+            WHERE cp.Codigo_Peca = @Codigo
+            GROUP BY cp.Codigo_Peca";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Codigo", codigoPeca);
+                cmd.Parameters.AddWithValue("@Codigo", codigoPeca.Trim());
 
                 conn.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
@@ -146,16 +150,20 @@ namespace FinanceiroServiceWCF
                     dados = new DadosFinanceiros
                     {
                         CodigoPeca = reader["Codigo_Peca"].ToString(),
-                        Custo = Convert.ToDecimal(reader["Custo"]),
-                        Lucro = Convert.ToDecimal(reader["Lucro"]),
-                        Prejuizo = Convert.ToDecimal(reader["Prejuizo"]),
-                        TempoProducao = Convert.ToInt32(reader["TempoTotal"])
+                        Custo = reader["Custo"] != DBNull.Value ? Convert.ToDecimal(reader["Custo"]) : 0,
+                        Lucro = reader["Lucro"] != DBNull.Value ? Convert.ToDecimal(reader["Lucro"]) : 0,
+                        Prejuizo = reader["Prejuizo"] != DBNull.Value ? Convert.ToDecimal(reader["Prejuizo"]) : 0,
+                        TempoProducao = reader["TempoTotal"] != DBNull.Value ? Convert.ToInt32(reader["TempoTotal"]) : 0
                     };
                 }
             }
 
             return dados;
         }
+
+
+
+
 
     }
 }
