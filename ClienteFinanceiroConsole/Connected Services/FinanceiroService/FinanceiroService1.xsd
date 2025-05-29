@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://schemas.datacontract.org/2004/07/FinanceiroServiceWCF" elementFormDefault="qualified" targetNamespace="http://schemas.datacontract.org/2004/07/FinanceiroServiceWCF" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="ArrayOfPrejuizoPorPeca">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="PrejuizoPorPeca" nillable="true" type="tns:PrejuizoPorPeca" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfPrejuizoPorPeca" nillable="true" type="tns:ArrayOfPrejuizoPorPeca" />
+  <xs:complexType name="PrejuizoPorPeca">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="CodigoPeca" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="TotalPrejuizo" type="xs:decimal" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="PrejuizoPorPeca" nillable="true" type="tns:PrejuizoPorPeca" />
+  <xs:complexType name="DadosFinanceiros">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="CodigoPeca" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="Custo" type="xs:decimal" />
+      <xs:element minOccurs="0" name="Lucro" type="xs:decimal" />
+      <xs:element minOccurs="0" name="Prejuizo" type="xs:decimal" />
+      <xs:element minOccurs="0" name="TempoProducao" type="xs:int" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="DadosFinanceiros" nillable="true" type="tns:DadosFinanceiros" />
+</xs:schema>

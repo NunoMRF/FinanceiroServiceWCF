@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://tempuri.org/" elementFormDefault="qualified" targetNamespace="http://tempuri.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import schemaLocation="http://localhost:50756/FinanceiroService.svc?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/FinanceiroServiceWCF" />
+  <xs:element name="GetPecaMaiorPrejuizo">
+    <xs:complexType>
+      <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetPecaMaiorPrejuizoResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="GetPecaMaiorPrejuizoResult" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetCustoTotalProducao">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="dataInicio" type="xs:dateTime" />
+        <xs:element minOccurs="0" name="dataFim" type="xs:dateTime" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetCustoTotalProducaoResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="GetCustoTotalProducaoResult" type="xs:decimal" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetLucroTotal">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="dataInicio" type="xs:dateTime" />
+        <xs:element minOccurs="0" name="dataFim" type="xs:dateTime" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetLucroTotalResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="GetLucroTotalResult" type="xs:decimal" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetPrejuizoTotalPorPeca">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="dataInicio" type="xs:dateTime" />
+        <xs:element minOccurs="0" name="dataFim" type="xs:dateTime" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetPrejuizoTotalPorPecaResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q1="http://schemas.datacontract.org/2004/07/FinanceiroServiceWCF" minOccurs="0" name="GetPrejuizoTotalPorPecaResult" nillable="true" type="q1:ArrayOfPrejuizoPorPeca" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetDadosFinanceirosPorPeca">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="codigoPeca" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="GetDadosFinanceirosPorPecaResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q2="http://schemas.datacontract.org/2004/07/FinanceiroServiceWCF" minOccurs="0" name="GetDadosFinanceirosPorPecaResult" nillable="true" type="q2:DadosFinanceiros" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
