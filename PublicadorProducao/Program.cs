@@ -1,45 +1,108 @@
 ﻿using System;
 using System.Text;
+using System.Threading;
 using RabbitMQ.Client;
 
 namespace PublicadorProducao
 {
     class Program
     {
+        static readonly string[] resultados = { "01", "02", "03", "04", "05", "06" };
+        static readonly Random random = new Random();
         static void Main(string[] args)
         {
-            // Dados de produção simulados
-            string codigoPeca = "bb569690";
-            DateTime dataProducao = DateTime.Now;
-            int tempoProducao = 45;
-            string resultadoTeste = "F"; // "F" = falha; "P" = passou
+            bool sair = false;
 
-            // Conectar ao RabbitMQ
-            var factory = new ConnectionFactory() { HostName = "localhost" };
-
-            using (IConnection connection = factory.CreateConnection())
-            using (IModel channel = connection.CreateModel())
+            while (!sair)
             {
-                // Declara uma exchange (tipo fanout para broadcast)
-                channel.ExchangeDeclare(exchange: "producao_exchange", type: "fanout");
+                Console.Clear();
+                Console.WriteLine("===== Menu do Publisher =====");
+                Console.WriteLine("1. Gerar 1 peça");
+                Console.WriteLine("2. Gerar 2 peças");
+                Console.WriteLine("3. Gerar 5 peças");
+                Console.WriteLine("4. Gerar peças continuamente (CTRL+C para parar)");
+                Console.WriteLine("0. Sair");
+                Console.Write("Escolha: ");
 
-                // Criar a mensagem no formato JSON simples
-                string mensagem = $"{{ \"codigo\": \"{codigoPeca}\", \"data\": \"{dataProducao:yyyy-MM-ddTHH:mm:ss}\", \"tempo\": {tempoProducao}, \"resultado\": \"{resultadoTeste}\" }}";
+                string opcao = Console.ReadLine();
+                int quantidade = 0;
 
-                var body = Encoding.UTF8.GetBytes(mensagem);
+                switch (opcao)
+                {
+                    case "1":
+                        quantidade = 1;
+                        break;
+                    case "2":
+                        quantidade = 2;
+                        break;
+                    case "3":
+                        quantidade = 5;
+                        break;
+                    case "4":
+                        Console.WriteLine("\nA gerar peças continuamente (CTRL+C para parar)...\n");
+                        while (true)
+                        {
+                            GerarEPublicarPeca();
+                            Thread.Sleep(2000);
+                        }
+                    case "0":
+                        sair = true;
+                        continue;
+                    default:
+                        Console.WriteLine("Opção inválida. Prima ENTER para continuar...");
+                        Console.ReadLine();
+                        continue;
+                }
 
-                // Publicar a mensagem
-                channel.BasicPublish(exchange: "producao_exchange",
-                                     routingKey: "",
-                                     basicProperties: null,
-                                     body: body);
+                for (int i = 0; i < quantidade; i++)
+                {
+                    GerarEPublicarPeca();
+                    Thread.Sleep(1000);
+                }
 
-                Console.WriteLine("✔ Mensagem enviada com sucesso:");
-                Console.WriteLine(mensagem);
+                Console.WriteLine("\nPressiona ENTER para voltar ao menu...");
+                Console.ReadLine();
             }
+        }
 
-            Console.WriteLine("Prima qualquer tecla para sair...");
-            Console.ReadKey();
+        static void GerarEPublicarPeca()
+        {
+            string codigoPeca = GerarCodigoPeca();
+            DateTime dataProducao = DateTime.Now;
+            int tempoProducao = random.Next(10, 100);
+            string resultado = resultados[random.Next(resultados.Length)];
+
+            if (resultado != "01")
+            {
+                Console.WriteLine($"FALHA - Peça: {codigoPeca}, Resultado: {resultado}, enviada para RabbitMQ");
+
+                var factory = new ConnectionFactory() { HostName = "localhost" };
+                using (var connection = factory.CreateConnection())
+                using (var channel = connection.CreateModel())
+                {
+                    channel.ExchangeDeclare(exchange: "producao_exchange", type: "fanout");
+
+                    string mensagem = $"{{ \"codigo\": \"{codigoPeca}\", \"data\": \"{dataProducao:yyyy-MM-ddTHH:mm:ss}\", \"tempo\": {tempoProducao}, \"resultado\": \"{resultado}\" }}";
+                    var body = Encoding.UTF8.GetBytes(mensagem);
+
+                    channel.BasicPublish(exchange: "producao_exchange",
+                                         routingKey: "",
+                                         basicProperties: null,
+                                         body: body);
+                }
+            }
+            else
+            {
+                Console.WriteLine($"OK    - Peça: {codigoPeca}, Resultado: {resultado}, não enviada");
+            }
+        }
+
+        static string GerarCodigoPeca()
+        {
+            string[] prefixos = { "aa", "ab", "ba", "bb" };
+            string prefixo = prefixos[random.Next(prefixos.Length)];
+            int sufixo = random.Next(100000, 999999);
+            return prefixo + sufixo.ToString();
         }
     }
 }
