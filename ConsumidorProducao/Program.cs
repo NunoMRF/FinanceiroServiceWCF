@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Text;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using ConsumidorProducao.Models;
 
 namespace ConsumidorProducao
 {
@@ -13,30 +17,72 @@ namespace ConsumidorProducao
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                // Garante que a mesma exchange usada pelo Publisher existe
                 channel.ExchangeDeclare(exchange: "producao_exchange", type: "fanout");
 
-                // Cria uma queue temporária para este consumidor
                 var queueName = channel.QueueDeclare().QueueName;
                 channel.QueueBind(queue: queueName, exchange: "producao_exchange", routingKey: "");
 
-                Console.WriteLine("A aguardar mensagens com falha...\n");
+                Console.WriteLine("⏳ A aguardar mensagens com falha...\n");
 
                 var consumer = new EventingBasicConsumer(channel);
                 consumer.Received += (model, ea) =>
                 {
                     var body = ea.Body.ToArray();
                     var mensagem = Encoding.UTF8.GetString(body);
-                    Console.WriteLine("Recebido: " + mensagem);
+                    Console.WriteLine("📩 Recebido: " + mensagem);
+
+                    try
+                    {
+                        // 1. Desserializar para objeto temporário
+                        var dados = JsonConvert.DeserializeObject<MensagemProducao>(mensagem);
+
+                        // 2. Construir objeto Produto com Teste
+                        var produto = new Produto
+                        {
+                            Codigo_Peca = dados.codigo,
+                            Data_Producao = DateTime.Parse(dados.data),
+                            Hora_Producao = DateTime.Parse(dados.data).TimeOfDay,
+                            Tempo_Producao = dados.tempo,
+                            Testes = new List<Teste>
+                        {
+                            new Teste
+                            {
+                                Codigo_Resultado = dados.resultado,
+                                Data_Teste = DateTime.Now
+                            }
+                        }
+                        };
+
+                        // 3. Serializar para JSON
+                        var json = JsonConvert.SerializeObject(produto);
+                        var client = new WebClient();
+                        client.Headers[HttpRequestHeader.ContentType] = "application/json";
+
+                        // 4. Enviar para Swagger API (ajusta a porta se necessário)
+                        string apiUrl = "https://localhost:7097/api/Produto";
+                        var response = client.UploadString(apiUrl, "POST", json);
+                        Console.WriteLine("✅ Enviado para a API com sucesso.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("❌ Erro ao enviar para API: " + ex.Message);
+                    }
                 };
 
-                channel.BasicConsume(queue: queueName,
-                                     autoAck: true,
-                                     consumer: consumer);
+                channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
 
                 Console.WriteLine("Pressiona ENTER para sair.");
                 Console.ReadLine();
             }
+        }
+
+        // Classe auxiliar para desserialização simples da mensagem recebida
+        class MensagemProducao
+        {
+            public string codigo { get; set; }
+            public string data { get; set; }
+            public int tempo { get; set; }
+            public string resultado { get; set; }
         }
     }
 }
