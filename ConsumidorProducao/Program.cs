@@ -20,7 +20,7 @@ namespace ConsumidorProducao
                 var queueName = channel.QueueDeclare().QueueName;
                 channel.QueueBind(queue: queueName, exchange: "producao_exchange", routingKey: "");
 
-                Console.WriteLine("🟢 A aguardar mensagens com falha (Resultado ≠ 01)...\n");
+                Console.WriteLine("A aguardar mensagens com falha...\n");
 
                 var consumer = new EventingBasicConsumer(channel);
                 consumer.Received += (model, ea) =>
