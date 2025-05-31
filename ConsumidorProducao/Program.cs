@@ -11,6 +11,8 @@ namespace ConsumidorProducao
 {
     class Program
     {
+        static int totalProcessadas = 0;
+        static int totalFalhas = 0;
         static void Main(string[] args)
         {
             var factory = new ConnectionFactory() { HostName = "localhost" };
@@ -22,21 +24,19 @@ namespace ConsumidorProducao
                 var queueName = channel.QueueDeclare().QueueName;
                 channel.QueueBind(queue: queueName, exchange: "producao_exchange", routingKey: "");
 
-                Console.WriteLine("⏳ A aguardar mensagens com falha...\n");
+                Console.WriteLine("A aguardar mensagens de produção...\n");
 
                 var consumer = new EventingBasicConsumer(channel);
                 consumer.Received += (model, ea) =>
                 {
                     var body = ea.Body.ToArray();
                     var mensagem = Encoding.UTF8.GetString(body);
-                    Console.WriteLine("📩 Recebido: " + mensagem);
+                    Console.WriteLine("Recebido: " + mensagem);
 
                     try
                     {
-                        // 1. Desserializar para objeto temporário
                         var dados = JsonConvert.DeserializeObject<MensagemProducao>(mensagem);
 
-                        // 2. Construir objeto Produto com Teste
                         var produto = new Produto
                         {
                             Codigo_Peca = dados.codigo,
@@ -53,19 +53,23 @@ namespace ConsumidorProducao
                         }
                         };
 
-                        // 3. Serializar para JSON
                         var json = JsonConvert.SerializeObject(produto);
                         var client = new WebClient();
                         client.Headers[HttpRequestHeader.ContentType] = "application/json";
 
-                        // 4. Enviar para Swagger API (ajusta a porta se necessário)
                         string apiUrl = "https://localhost:7097/api/Produto";
-                        var response = client.UploadString(apiUrl, "POST", json);
-                        Console.WriteLine("✅ Enviado para a API com sucesso.");
+                        client.UploadString(apiUrl, "POST", json);
+
+                        Console.WriteLine("Enviado para a API com sucesso.");
+
+                        totalProcessadas++;
+                        if (dados.resultado != "01") totalFalhas++;
+
+                        Console.WriteLine($"Total processadas: {totalProcessadas} | Total com falha: {totalFalhas}\n");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("❌ Erro ao enviar para API: " + ex.Message);
+                        Console.WriteLine("Erro ao enviar para API: " + ex.Message);
                     }
                 };
 
@@ -76,7 +80,6 @@ namespace ConsumidorProducao
             }
         }
 
-        // Classe auxiliar para desserialização simples da mensagem recebida
         class MensagemProducao
         {
             public string codigo { get; set; }
