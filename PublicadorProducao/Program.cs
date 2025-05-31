@@ -72,28 +72,29 @@ namespace PublicadorProducao
             int tempoProducao = random.Next(10, 100);
             string resultado = resultados[random.Next(resultados.Length)];
 
-            if (resultado != "01")
+            var mensagem = $"{{ \"codigo\": \"{codigoPeca}\", \"data\": \"{dataProducao:yyyy-MM-ddTHH:mm:ss}\", \"tempo\": {tempoProducao}, \"resultado\": \"{resultado}\" }}";
+
+            var factory = new ConnectionFactory() { HostName = "localhost" };
+            using (var connection = factory.CreateConnection())
+            using (var channel = connection.CreateModel())
             {
-                Console.WriteLine($"FALHA - Peça: {codigoPeca}, Resultado: {resultado}, enviada para RabbitMQ");
+                channel.ExchangeDeclare(exchange: "producao_exchange", type: "fanout");
 
-                var factory = new ConnectionFactory() { HostName = "localhost" };
-                using (var connection = factory.CreateConnection())
-                using (var channel = connection.CreateModel())
-                {
-                    channel.ExchangeDeclare(exchange: "producao_exchange", type: "fanout");
+                var body = Encoding.UTF8.GetBytes(mensagem);
 
-                    string mensagem = $"{{ \"codigo\": \"{codigoPeca}\", \"data\": \"{dataProducao:yyyy-MM-ddTHH:mm:ss}\", \"tempo\": {tempoProducao}, \"resultado\": \"{resultado}\" }}";
-                    var body = Encoding.UTF8.GetBytes(mensagem);
+                channel.BasicPublish(exchange: "producao_exchange",
+                                     routingKey: "",
+                                     basicProperties: null,
+                                     body: body);
+            }
 
-                    channel.BasicPublish(exchange: "producao_exchange",
-                                         routingKey: "",
-                                         basicProperties: null,
-                                         body: body);
-                }
+            if (resultado == "01")
+            {
+                Console.WriteLine($"OK    - Peça: {codigoPeca}, Resultado: {resultado}, enviada para RabbitMQ");
             }
             else
             {
-                Console.WriteLine($"OK    - Peça: {codigoPeca}, Resultado: {resultado}, não enviada");
+                Console.WriteLine($"FALHA - Peça: {codigoPeca}, Resultado: {resultado}, enviada para RabbitMQ");
             }
         }
 
